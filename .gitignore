@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+.venv/
+
+# Data
+data/raw/
+data/processed/
+
+# LanceDB
+db/
+
+# VS Code
+.vscode/
