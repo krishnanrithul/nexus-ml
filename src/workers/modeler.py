@@ -58,7 +58,9 @@ def _segment_rmse(df_test: pd.DataFrame, y_true: np.ndarray,
     Returns:
         {"Riverside": {"rmse": 14200.0, "mape": 12.4, "n": 45}, ...}
     """
+    
     results = {}
+
     ohe_cols = [c for c in df_test.columns if c.startswith(f"{segment_prefix}_")]
 
     if ohe_cols:

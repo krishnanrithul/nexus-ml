@@ -116,4 +116,4 @@ def run(raw_data_path: str, fresh: bool = True):
 
 
 if __name__ == "__main__":
-    run("data/raw/house_prices.csv")
+    run("data/raw/house_prices_complex.csv")
