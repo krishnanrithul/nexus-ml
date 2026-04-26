@@ -113,25 +113,26 @@ def manager_node(state: FactoryState) -> dict:
         print(f"Manager: 🛑 Max retries ({_MAX_RETRIES}) reached. Terminating.")
         return {"next_step": "end", "retry_count": 0}
 
-    # Ask the LLM to reason over the state
-    prompt = _build_routing_prompt(state)
-    response = client.generate(model="mistral", prompt=prompt)
-    raw = response["response"]
-
-    action, reasoning, diagnosis = _parse_response(raw)
-
-    print(f"Manager: 🧠 Action    → {action}")
-    print(f"Manager: 💬 Reasoning → {reasoning}")
-    if diagnosis != "none":
-        print(f"Manager: 🔧 Diagnosis → {diagnosis}")
-
-    # Track retry count — increments on retry actions, resets otherwise
-    new_retry_count = retry_count + 1 if "retry" in action else 0
-
+    # Deterministic guards — check if stages are complete before asking LLM
+    # This prevents the LLM from looping on stages that have already run
+    
+    if not state.get("cleaned_data_path"):
+        print("Manager: No cleaned data. Routing to [WRANGLER]")
+        return {"next_step": "wrangler", "retry_count": 0}
+    
+    if not state.get("model_results"):
+        print("Manager: Data cleaned but no models. Routing to [MODELER]")
+        return {"next_step": "modeler", "retry_count": 0}
+    
+    if not state.get("report_chunks"):
+        print("Manager: Models trained but no narrative. Routing to [CHRONICLER]")
+        return {"next_step": "chronicler", "retry_count": 0}
+    
+    # All stages complete
+    print("Manager: ✅ All stages complete. Routing to END.")
     return {
-        "next_step":     action,
-        "retry_count":   new_retry_count,
-        "manager_diagnosis": diagnosis,  # workers read this on retry to apply the fix
-        "errors":        [],             # clear errors after manager has processed them
-        "messages":      [f"Manager: Routed to '{action}'. Reason: {reasoning}"],
+        "next_step": "end",
+        "retry_count": 0,
+        "errors": [],
+        "messages": ["Manager: Pipeline complete."],
     }
