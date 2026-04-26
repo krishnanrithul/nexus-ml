@@ -126,9 +126,12 @@ def query_chunks(question: str,
 
     table        = db.open_table(_TABLE_NAME)
     query_vector = _embed([question])[0].tolist()
-
-    search = table.search(query_vector).limit(top_k * 3 if record_type else top_k)
-    raw    = search.to_list()
+    
+    # LanceDB to filter before returning
+    search = table.search(query_vector).limit(top_k)
+    if record_type:
+        search = search.where(f"record_type = '{record_type}'")
+    raw = search.to_list()
 
     # Post-filter by record_type if specified
     # (LanceDB OSS doesn't support pre-filter on ANN — filter after retrieval)
